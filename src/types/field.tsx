@@ -64,3 +64,18 @@ export interface CreateFieldFormData {
   district: string
   fieldTypeId: string
 }
+
+export interface Province {
+  province_id?: number
+  code: string
+  name: string
+  type?: string
+}
+
+export interface Ward {
+  ward_id?: number
+  code: string
+  name: string
+  type?: string
+  province_code?: string
+}
