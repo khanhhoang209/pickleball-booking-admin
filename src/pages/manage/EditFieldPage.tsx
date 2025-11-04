@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router'
 import AdminLayout from '~/components/layout/AdminLayout'
 import axiosInstance from '~/config/axios'
 import { toast } from 'sonner'
-import type { FieldType, CreateFieldFormData } from '~/types/field'
+import type { FieldType, CreateFieldFormData, Province, Ward } from '~/types/field'
+import MapPicker from '~/components/ui/map-picker'
 
 const EditFieldPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -14,6 +15,10 @@ const EditFieldPage: React.FC = () => {
   const [loadingFieldTypes, setLoadingFieldTypes] = useState(true)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [previewBlueprint, setPreviewBlueprint] = useState<string | null>(null)
+  const [provinces, setProvinces] = useState<Province[]>([])
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null)
+  const [wards, setWards] = useState<Ward[]>([])
+  const [selectedWard, setSelectedWard] = useState<Ward | null>(null)
   const [formData, setFormData] = useState<CreateFieldFormData>({
     name: '',
     description: '',
@@ -57,6 +62,73 @@ const EditFieldPage: React.FC = () => {
     fetchFieldTypes()
   }, [])
 
+  // Fetch provinces
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await axiosInstance.get('https://tinhthanhpho.com/api/v1/new-provinces', {
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_TINHTHANHPHO_API_KEY}`
+          },
+          params: {
+            limit: 100
+          }
+        })
+        if (response.data.success && response.data.data) {
+          setProvinces(response.data.data)
+        }
+      } catch (err) {
+        console.error('Error fetching provinces:', err)
+        toast.error('Không thể tải danh sách tỉnh thành')
+      }
+    }
+
+    fetchProvinces()
+  }, [])
+
+  // Fetch wards when province is selected
+  useEffect(() => {
+    const fetchWards = async () => {
+      try {
+        if (!selectedProvince) {
+          setWards([])
+          return
+        }
+        const provinceCode = selectedProvince.code
+        const response = await axiosInstance.get(
+          `https://tinhthanhpho.com/api/v1/new-provinces/${provinceCode}/wards`,
+          {
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_TINHTHANHPHO_API_KEY}`
+            },
+            params: {
+              provinceCode,
+              limit: 100
+            }
+          }
+        )
+        if (response.data.success && response.data.data) {
+          setWards(response.data.data)
+        }
+      } catch (err) {
+        console.error('Error fetching wards:', err)
+        toast.error('Không thể tải danh sách phường xã')
+      }
+    }
+
+    fetchWards()
+  }, [selectedProvince])
+
+  // Set initial ward selection once wards are loaded
+  useEffect(() => {
+    if (wards.length > 0 && formData.district && !selectedWard) {
+      const matchedWard = wards.find((w) => w.name === formData.district)
+      if (matchedWard) {
+        setSelectedWard(matchedWard)
+      }
+    }
+  }, [wards, formData.district, selectedWard])
+
   // Fetch field data
   useEffect(() => {
     if (!id) {
@@ -90,6 +162,14 @@ const EditFieldPage: React.FC = () => {
           // Set preview to existing images
           setPreviewImage(field.imageUrl)
           setPreviewBlueprint(field.bluePrintImageUrl)
+
+          // Set initial province and ward selections if city and district exist
+          if (field.city && provinces.length > 0) {
+            const matchedProvince = provinces.find((p) => p.name === field.city)
+            if (matchedProvince) {
+              setSelectedProvince(matchedProvince)
+            }
+          }
         } else {
           toast.error(response.data.message || 'Không thể tải dữ liệu sân')
         }
@@ -106,7 +186,7 @@ const EditFieldPage: React.FC = () => {
     }
 
     fetchField()
-  }, [id])
+  }, [id, provinces])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -156,6 +236,14 @@ const EditFieldPage: React.FC = () => {
     }
     if (!formData.address.trim()) {
       toast.error('Vui lòng nhập địa chỉ')
+      return
+    }
+    if (!formData.city.trim()) {
+      toast.error('Vui lòng chọn thành phố')
+      return
+    }
+    if (!formData.district.trim()) {
+      toast.error('Vui lòng chọn quận/huyện')
       return
     }
     if (!formData.pricePerHour || formData.pricePerHour <= 0) {
@@ -397,60 +485,87 @@ const EditFieldPage: React.FC = () => {
               {/* City and District - 2 columns */}
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-semibold text-gray-700 mb-2'>Thành Phố</label>
-                  <input
-                    type='text'
+                  <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                    Thành Phố <span className='text-red-500'>*</span>
+                  </label>
+                  <select
                     name='city'
-                    value={formData.city}
-                    onChange={handleInputChange}
+                    value={selectedProvince?.code || ''}
+                    onChange={(e) => {
+                      const province = provinces.find((p) => p.code === e.target.value)
+                      setSelectedProvince(province || null)
+                      setSelectedWard(null)
+                      setFormData((prev) => ({
+                        ...prev,
+                        city: province?.name || '',
+                        district: ''
+                      }))
+                    }}
                     className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
-                    placeholder='Nhập thành phố'
-                  />
+                  >
+                    <option value=''>-- Chọn thành phố --</option>
+                    {provinces.map((province) => (
+                      <option key={province.code} value={province.code}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className='block text-sm font-semibold text-gray-700 mb-2'>Quận/Huyện</label>
-                  <input
-                    type='text'
+                  <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                    Quận/Huyện <span className='text-red-500'>*</span>
+                  </label>
+                  <select
                     name='district'
-                    value={formData.district}
-                    onChange={handleInputChange}
+                    value={selectedWard?.code || ''}
+                    onChange={(e) => {
+                      const ward = wards.find((w) => w.code === e.target.value)
+                      setSelectedWard(ward || null)
+                      setFormData((prev) => ({
+                        ...prev,
+                        district: ward?.name || ''
+                      }))
+                    }}
                     className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
-                    placeholder='Nhập quận/huyện'
-                  />
+                    disabled={!selectedProvince}
+                  >
+                    <option value=''>-- Chọn quận/huyện --</option>
+                    {wards.map((ward) => (
+                      <option key={ward.code} value={ward.code}>
+                        {ward.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Latitude and Longitude - 2 columns */}
-              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-                <div>
-                  <label className='block text-sm font-semibold text-gray-700 mb-2'>Latitude</label>
-                  <input
-                    type='number'
-                    name='latitude'
-                    value={formData.latitude || ''}
-                    onChange={handleInputChange}
-                    step='0.000001'
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
-                    placeholder='0.000000'
-                  />
-                </div>
-                <div>
-                  <label className='block text-sm font-semibold text-gray-700 mb-2'>Longitude</label>
-                  <input
-                    type='number'
-                    name='longitude'
-                    value={formData.longitude || ''}
-                    onChange={handleInputChange}
-                    step='0.000001'
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
-                    placeholder='0.000000'
-                  />
-                </div>
+              {/* Map Location Picker */}
+              <div>
+                <label className='block text-sm font-semibold text-gray-700 mb-2'>Chọn Vị Trí Trên Bản Đồ</label>
+                <p className='text-xs text-gray-500 mb-3'>
+                  Tìm kiếm địa điểm hoặc click vào bản đồ để chọn vị trí chính xác. Vĩ độ và kinh độ sẽ được lưu tự
+                  động.
+                </p>
+                <MapPicker
+                  accessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || ''}
+                  initialLat={formData.latitude}
+                  initialLng={formData.longitude}
+                  initialAddress={formData.address}
+                  initialCity={formData.city}
+                  initialDistrict={formData.district}
+                  onLocationSelect={(lat, lng) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      latitude: lat,
+                      longitude: lng
+                    }))
+                  }}
+                />
               </div>
 
               {/* Map URL */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-2'>URL Bản Đồ</label>
+                <label className='block text-sm font-semibold text-gray-700 mb-2'>URL Bản Đồ (Tùy chọn)</label>
                 <input
                   type='url'
                   name='mapUrl'
