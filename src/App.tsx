@@ -15,6 +15,8 @@ import PricingsPage from '~/pages/manage/PricingsPage'
 import CreatePricingPage from '~/pages/manage/CreatePricingPage'
 import EditPricingPage from '~/pages/manage/EditPricingPage'
 
+import BookingsPage from '~/pages/manage/BookingsPage'
+import BookingDetailPage from '~/pages/manage/BookingDetailPage'
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate()
 
@@ -111,6 +113,26 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <EditPricingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Bookings Management */}
+      <Route
+        path='/bookings'
+        element={
+          <ProtectedRoute>
+            <BookingsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Booking Detail */}
+      <Route
+        path='/bookings/:id'
+        element={
+          <ProtectedRoute>
+            <BookingDetailPage />
           </ProtectedRoute>
         }
       />
