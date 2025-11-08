@@ -29,6 +29,7 @@ const PricingsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Pricing | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // removed restore feature per request
 
   // Fetch fields for filter
   useEffect(() => {
@@ -175,6 +176,8 @@ const PricingsPage: React.FC = () => {
     }
   }
 
+  // restore handler removed
+
   const formatTime = (time: string) => {
     if (!time) return ''
     return time.substring(0, 5) // Format HH:mm:ss to HH:mm
@@ -292,9 +295,11 @@ const PricingsPage: React.FC = () => {
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                       Giá
                     </th>
-                    <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Hành Động
-                    </th>
+                    {isActive && (
+                      <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        Hành Động
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className='bg-white divide-y divide-gray-200'>
@@ -334,36 +339,38 @@ const PricingsPage: React.FC = () => {
                           {pricing.price.toLocaleString()}đ
                         </div>
                       </td>
-                      <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-                        <button
-                          onClick={() => navigate(`/pricings/${pricing.id}/edit`)}
-                          className='inline-flex items-center px-3 py-1.5 text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors'
-                        >
-                          <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                            />
-                          </svg>
-                          Sửa
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(pricing)}
-                          className='inline-flex items-center px-3 py-1.5 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors'
-                        >
-                          <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                            />
-                          </svg>
-                          Xóa
-                        </button>
-                      </td>
+                      {isActive && (
+                        <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
+                          <button
+                            onClick={() => navigate(`/pricings/${pricing.id}/edit`)}
+                            className='inline-flex items-center px-3 py-1.5 text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors'
+                          >
+                            <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                              />
+                            </svg>
+                            Sửa
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(pricing)}
+                            className='inline-flex items-center px-3 py-1.5 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors'
+                          >
+                            <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                              />
+                            </svg>
+                            Xóa
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
