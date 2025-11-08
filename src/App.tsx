@@ -11,6 +11,10 @@ import FieldsPage from '~/pages/manage/FieldsPage'
 import FieldDetailPage from '~/pages/manage/FieldDetailPage'
 import CreateFieldPage from '~/pages/manage/CreateFieldPage'
 import EditFieldPage from '~/pages/manage/EditFieldPage'
+import PricingsPage from '~/pages/manage/PricingsPage'
+import CreatePricingPage from '~/pages/manage/CreatePricingPage'
+import EditPricingPage from '~/pages/manage/EditPricingPage'
+
 import BookingsPage from '~/pages/manage/BookingsPage'
 import BookingDetailPage from '~/pages/manage/BookingDetailPage'
 const AppRoutes: React.FC = () => {
@@ -79,6 +83,36 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <EditFieldPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Pricings Management */}
+      <Route
+        path='/pricings'
+        element={
+          <ProtectedRoute>
+            <PricingsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Create Pricing */}
+      <Route
+        path='/pricings/create'
+        element={
+          <ProtectedRoute>
+            <CreatePricingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Edit Pricing */}
+      <Route
+        path='/pricings/:id/edit'
+        element={
+          <ProtectedRoute>
+            <EditPricingPage />
           </ProtectedRoute>
         }
       />
