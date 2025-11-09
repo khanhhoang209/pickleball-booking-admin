@@ -77,6 +77,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ),
       path: '/users',
       active: location.pathname === '/users'
+    },
+    {
+      id: 'chat',
+      name: 'Chat',
+      icon: (
+        <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
+          <path fillRule='evenodd' d='M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z' clipRule='evenodd' />
+        </svg>
+      ),
+      path: '/chat',
+      active: location.pathname === '/chat'
     }
   ]
 
@@ -91,6 +102,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (currentPath === '/bookings' || currentPath.startsWith('/bookings/')) return 'Quản Lý Booking'
     if (currentPath === '/pricings') return 'Quản Lý Giá'
     if (currentPath === '/users') return 'Quản Lý Người Dùng'
+    if (currentPath === '/chat') return 'Chat'
     return 'Dashboard'
   }
 

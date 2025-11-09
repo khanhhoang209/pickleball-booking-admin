@@ -17,6 +17,7 @@ import EditPricingPage from '~/pages/manage/EditPricingPage'
 import BookingsPage from '~/pages/manage/BookingsPage'
 import BookingDetailPage from '~/pages/manage/BookingDetailPage'
 import UsersPage from '~/pages/manage/UsersPage'
+import ChatPage from '~/pages/manage/ChatPage'
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate()
@@ -144,6 +145,16 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <UsersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Chat */}
+      <Route
+        path='/chat'
+        element={
+          <ProtectedRoute>
+            <ChatPage />
           </ProtectedRoute>
         }
       />

@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.3",
+    "firebase": "^12.5.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.16.0",
