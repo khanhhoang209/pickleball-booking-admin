@@ -6,7 +6,7 @@ import { setNavigate } from '~/config/axios'
 import LoginPage from '~/pages/auth/LoginPage'
 import ProtectedRoute from '~/components/auth/ProtectedRoute'
 import NotFound from '~/pages/error/NotFound'
-import Dashboard from '~/pages/manage/Daskboard'
+import Dashboard from '~/pages/manage/Dashboard'
 import FieldsPage from '~/pages/manage/FieldsPage'
 import FieldDetailPage from '~/pages/manage/FieldDetailPage'
 import CreateFieldPage from '~/pages/manage/CreateFieldPage'
@@ -14,9 +14,10 @@ import EditFieldPage from '~/pages/manage/EditFieldPage'
 import PricingsPage from '~/pages/manage/PricingsPage'
 import CreatePricingPage from '~/pages/manage/CreatePricingPage'
 import EditPricingPage from '~/pages/manage/EditPricingPage'
-
 import BookingsPage from '~/pages/manage/BookingsPage'
 import BookingDetailPage from '~/pages/manage/BookingDetailPage'
+import UsersPage from '~/pages/manage/UsersPage'
+
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate()
 
@@ -137,12 +138,12 @@ const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Placeholder routes for sidebar navigation */}
+      {/* Users Management */}
       <Route
         path='/users'
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <UsersPage />
           </ProtectedRoute>
         }
       />

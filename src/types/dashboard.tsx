@@ -1,3 +1,54 @@
+// Dashboard Summary Types
+export interface DashboardSummary {
+  totalBookings: number
+  totalCustomers: number
+  totalFields: number
+  totalRevenue: number
+  completedBookings: number
+  pendingBookings: number
+  cancelledBookings: number
+  monthRevenue: number
+  todayRevenue: number
+}
+
+// Top Fields Types
+export interface TopFieldItem {
+  fieldId: string
+  fieldName: string
+  fieldAddress: string | null
+  imageUrl: string | null
+  bookingCount: number
+  totalRevenue: number
+}
+
+export interface GetTopFieldsResponse {
+  topFields: TopFieldItem[]
+}
+
+// Revenue Data Types
+export interface RevenueDataPoint {
+  label: string
+  date: string
+  revenue: number
+  bookingCount: number
+}
+
+export interface GetRevenueResponse {
+  view: 'day' | 'month' | 'year'
+  data: RevenueDataPoint[]
+  totalRevenue: number
+  startDate: string
+  endDate: string
+}
+
+// API Response Types
+export interface DataServiceResponse<T> {
+  success: boolean
+  message: string
+  data: T | null
+}
+
+// Legacy types (kept for compatibility)
 export interface RevenueData {
   itemRevenue: number
   courseRevenue: number
