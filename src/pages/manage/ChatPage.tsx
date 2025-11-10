@@ -4,10 +4,13 @@ import { Card } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { ChatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
 import type { ChatRoom, ChatMessage } from '~/types/chat'
-import { Send, User, Circle } from 'lucide-react'
+import { Send, User, Circle, Mail, Phone, Copy } from 'lucide-react'
+import axiosInstance from '~/config/axios'
+import type { UsersResponse } from '~/types/user'
 
 const ChatPage: React.FC = () => {
   const { user } = useAuth()
@@ -17,17 +20,14 @@ const ChatPage: React.FC = () => {
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [contactLoading, setContactLoading] = useState(false)
+  const [customerPhone, setCustomerPhone] = useState<string | null>(null)
 
   // Subscribe to chat rooms
   useEffect(() => {
-    if (!user?.id) {
-      console.log('ChatPage: No user ID found')
-      return
-    }
+    if (!user?.id) return
 
-    console.log('ChatPage: Subscribing to chat rooms for user:', user.id)
     const unsubscribe = ChatService.subscribeToRooms(user.id, (rooms) => {
-      console.log('ChatPage: Received chat rooms:', rooms)
       setChatRooms(rooms)
     })
 
@@ -44,9 +44,7 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (!selectedRoom) return
 
-    console.log('ChatPage: Subscribing to messages for room:', selectedRoom.customerId)
     const unsubscribe = ChatService.subscribeToMessages(selectedRoom.customerId, (msgs) => {
-      console.log('ChatPage: Received messages:', msgs)
       setMessages(msgs)
     })
 
@@ -57,6 +55,31 @@ const ChatPage: React.FC = () => {
 
     return () => unsubscribe()
   }, [selectedRoom, user?.id])
+
+  // Fetch customer contact (phone) when room changes
+  useEffect(() => {
+    const fetchContact = async () => {
+      if (!selectedRoom?.customerEmail) {
+        setCustomerPhone(null)
+        return
+      }
+      try {
+        setContactLoading(true)
+        const params = new URLSearchParams()
+        params.append('searchEmail', selectedRoom.customerEmail)
+        params.append('pageNumber', '1')
+        params.append('pageSize', '1')
+        const res = await axiosInstance.get<UsersResponse>(`/v1/users?${params.toString()}`)
+        const phone = res.data?.data?.[0]?.phoneNumber ?? null
+        setCustomerPhone(phone)
+      } catch {
+        setCustomerPhone(null)
+      } finally {
+        setContactLoading(false)
+      }
+    }
+    fetchContact()
+  }, [selectedRoom?.customerEmail])
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -190,12 +213,70 @@ const ChatPage: React.FC = () => {
                       <Circle className='absolute bottom-0 right-0 w-3 h-3 fill-green-500 text-green-500' />
                     )}
                   </div>
-                  <div>
+                  <div className='flex-1'>
                     <h3 className='font-semibold text-gray-900'>{selectedRoom.customerName}</h3>
                     <p className='text-sm text-gray-500'>
                       {selectedRoom.isOnline ? 'Online' : 'Offline'} • {selectedRoom.customerEmail}
                     </p>
                   </div>
+                  {/* Contact dropdown */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant='outline' size='sm'>Contact</Button>
+                    </PopoverTrigger>
+                    <PopoverContent align='end' className='w-80'>
+                      <div className='space-y-3'>
+                        <h4 className='font-semibold text-gray-900'>Customer contact</h4>
+                        <div className='flex items-center justify-between p-2 rounded border bg-white'>
+                          <div className='flex items-center gap-2 min-w-0'>
+                            <Mail className='w-4 h-4 text-gray-500' />
+                            <a
+                              href={`mailto:${selectedRoom.customerEmail}`}
+                              className='text-sm text-blue-600 truncate'
+                              title={selectedRoom.customerEmail}
+                            >
+                              {selectedRoom.customerEmail || 'Not available'}
+                            </a>
+                          </div>
+                          {selectedRoom.customerEmail && (
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              onClick={() => navigator.clipboard.writeText(selectedRoom.customerEmail)}
+                              title='Copy email'
+                            >
+                              <Copy className='w-4 h-4 text-gray-500' />
+                            </Button>
+                          )}
+                        </div>
+                        <div className='flex items-center justify-between p-2 rounded border bg-white'>
+                          <div className='flex items-center gap-2 min-w-0'>
+                            <Phone className='w-4 h-4 text-gray-500' />
+                            {contactLoading ? (
+                              <span className='text-sm text-gray-500'>Loading...</span>
+                            ) : customerPhone ? (
+                              <a href={`tel:${customerPhone}`} className='text-sm text-blue-600 truncate' title={customerPhone}>
+                                {customerPhone}
+                              </a>
+                            ) : (
+                              <span className='text-sm text-gray-500'>Not available</span>
+                            )}
+                          </div>
+                          {customerPhone && (
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              onClick={() => navigator.clipboard.writeText(customerPhone)}
+                              title='Copy phone'
+                            >
+                              <Copy className='w-4 h-4 text-gray-500' />
+                            </Button>
+                          )}
+                        </div>
+                        <p className='text-xs text-gray-500'>Use the links to email or call the customer directly.</p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Messages */}
@@ -205,36 +286,30 @@ const ChatPage: React.FC = () => {
                       <p>No messages yet. Start the conversation!</p>
                     </div>
                   ) : (
-                    messages.map((msg) => {
-                      console.log('Rendering message:', msg)
-                      return (
+                    messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}
+                      >
                         <div
-                          key={msg.id}
-                          className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            msg.senderRole === 'admin'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
+                          }`}
                         >
+                          <p className='text-sm'>{msg.message}</p>
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
-                              msg.senderRole === 'admin'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white text-gray-900 border border-gray-200'
+                            className={`text-xs mt-1 ${
+                              msg.senderRole === 'admin' ? 'text-blue-100' : 'text-gray-500'
                             }`}
                           >
-                            <p className='text-sm font-medium mb-1'>
-                              {msg.senderName} ({msg.senderRole})
-                            </p>
-                            <p className='text-sm'>{msg.message || '(no message text)'}</p>
-                            <div
-                              className={`text-xs mt-1 ${
-                                msg.senderRole === 'admin' ? 'text-blue-100' : 'text-gray-500'
-                              }`}
-                            >
-                              {formatTimestamp(msg.timestamp)}
-                              {msg.senderRole === 'admin' && msg.read && ' • Read'}
-                            </div>
+                            {formatTimestamp(msg.timestamp)}
+                            {msg.senderRole === 'admin' && msg.read && ' • Read'}
                           </div>
                         </div>
-                      )
-                    })
+                      </div>
+                    ))
                   )}
                   <div ref={messagesEndRef} />
                 </div>
